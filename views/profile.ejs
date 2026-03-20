@@ -1,0 +1,26 @@
+<div class="glass-card">
+    <div style="text-align:center; margin-bottom:2rem;">
+        <div style="width:100px; height:100px; background:var(--primary); border-radius:50%; margin:0 auto 1.5rem; display:flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:700; color:white;">
+            <%= user.email.charAt(0).toUpperCase() %>
+        </div>
+        <h2>Employee Profile</h2>
+        <p style="color:var(--text-muted);"><%= user.email %></p>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.03); border-radius:16px; padding:1.5rem; margin-bottom:2rem; border:1px solid var(--glass-border);">
+        <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+            <span style="color:var(--text-muted);">Account ID:</span>
+            <span style="color:white; font-family:monospace;">#000<%= user.id %></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+            <span style="color:var(--text-muted);">Security Role:</span>
+            <span class="badge badge-med"><%= user.role %></span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+            <span style="color:var(--text-muted);">Joined On:</span>
+            <span style="color:white;"><%= new Date(user.created_at).toLocaleDateString() %></span>
+        </div>
+    </div>
+
+    <button style="background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:white;" onclick="alert('Profile updates are disabled in this build.')">Update Information</button>
+</div>

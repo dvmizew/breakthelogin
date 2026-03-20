@@ -1,0 +1,13 @@
+<div style="text-align:center; max-width:600px;">
+    <h1 style="font-size:3.5rem; line-height:1.2; margin-bottom:1.5rem;">Access the Future of Security Tracking</h1>
+    <p style="color:var(--text-muted); font-size:1.1rem; line-height:1.6; margin-bottom:2.5rem;">AuthX is the world's most advanced internal ticketing and audit system. Built for speed, precision, and (initially) total vulnerability.</p>
+    
+    <div style="display:flex; gap:1.5rem; justify-content:center;">
+        <% if (user) { %>
+            <a href="/tickets" style="background:var(--primary); color:white; padding:1rem 2rem; border-radius:12px; text-decoration:none; font-weight:600;">Go to Tickets</a>
+        <% } else { %>
+            <a href="/login" style="background:var(--primary); color:white; padding:1rem 2rem; border-radius:12px; text-decoration:none; font-weight:600;">Secure Login</a>
+            <a href="/register" style="border:1px solid var(--glass-border); color:white; padding:1rem 2rem; border-radius:12px; text-decoration:none; font-weight:600;">Request Access</a>
+        <% } %>
+    </div>
+</div>

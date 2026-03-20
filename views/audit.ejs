@@ -1,0 +1,31 @@
+<div class="dashboard-container">
+    <div style="margin-bottom:2.5rem; text-align:center;">
+        <h2>Audit Logs Tracking</h2>
+        <p style="color:var(--text-muted); font-size:1.1rem; margin-top:0.5rem; max-width:600px; margin-inline:auto;">Security monitoring and compliance logs for all activity within the AuthX network.</p>
+    </div>
+
+    <% if (logs.length === 0) { %>
+        <p style="text-align:center; color:var(--text-muted); margin-top:3rem;">No security logs recorded yet.</p>
+    <% } else { %>
+        <table style="width:100%; border-collapse:collapse; background:var(--glass-bg); border-radius:16px; overflow:hidden; border:1px solid var(--glass-border);">
+            <thead>
+                <tr style="background:rgba(255,255,255,0.05); text-align:left;">
+                    <th style="padding:1.25rem 1rem; color:white; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--glass-border);">Timestamp</th>
+                    <th style="padding:1.25rem 1rem; color:white; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--glass-border);">Action</th>
+                    <th style="padding:1.25rem 1rem; color:white; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--glass-border);">Resource</th>
+                    <th style="padding:1.25rem 1rem; color:white; font-size:0.85rem; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--glass-border);">IP Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% logs.forEach(log => { %>
+                    <tr style="border-bottom:1px solid var(--glass-border); transition: background 0.3s ease;">
+                        <td style="padding:1rem; color:var(--text-muted); font-size:0.9rem;"><%= new Date(log.timestamp).toLocaleString() %></td>
+                        <td style="padding:1rem; color:white; font-weight:600; font-size:0.9rem;"><%= log.action %></td>
+                        <td style="padding:1rem; color:var(--primary); font-size:0.9rem;"><%= log.resource %></td>
+                        <td style="padding:1rem; color:var(--text-muted); font-size:0.9rem;"><%= log.ip_address %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    <% } %>
+</div>

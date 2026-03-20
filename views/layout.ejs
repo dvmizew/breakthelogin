@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | AuthX Security Hub</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="logo">Auth<span style="color:var(--text-primary)">X</span></div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <% if (user) { %>
+                <a href="/tickets">Tickets</a>
+                <a href="/audit">Audit Logs</a>
+                <a href="/profile">Profile</a>
+                <a href="/logout">Logout</a>
+            <% } else { %>
+                <a href="/login">Login</a>
+                <a href="/register">Register</a>
+            <% } %>
+        </div>
+    </nav>
+    <main class="container">
+        <%- body %>
+    </main>
+</body>
+</html>
