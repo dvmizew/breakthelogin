@@ -152,6 +152,7 @@ app.get('/tickets', (req, res) => {
     // VULNERABILITY: IDOR (Insecure Direct Object Reference)
     // No proper check if the user is owner or admin in the query logic
     db.all(`SELECT * FROM tickets`, [], (err, rows) => {
+        if (err) return res.render('index', { error: 'Database error fetching tickets.' });
         res.render('tickets', { title: 'Support Tickets', tickets: rows });
     });
 });
@@ -164,6 +165,7 @@ app.get('/audit', (req, res) => {
     }
 
     db.all(`SELECT * FROM audit_logs ORDER BY timestamp DESC`, [], (err, rows) => {
+        if (err) return res.render('index', { error: 'Database error fetching logs.' });
         res.render('audit', { title: 'Audit Tracker', logs: rows });
     });
 });
@@ -171,11 +173,12 @@ app.get('/audit', (req, res) => {
 app.get('/profile', (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     db.get(`SELECT * FROM users WHERE id = ?`, [req.session.user.id], (err, user) => {
+        if (err || !user) return res.redirect('/login');
         res.render('profile', { title: 'My Identity', user });
     });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`AuthX vulnerable server (v1) running on http://localhost:${PORT}`);
+    console.log(`Server (v1) running on http://localhost:${PORT}`);
 });
