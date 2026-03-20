@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const path = require('path');
+const expressLayouts = require('express-ejs-layouts');
 
 const app = express();
 const db = new sqlite3.Database('database.sqlite');
@@ -14,6 +15,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
+app.use(expressLayouts);
+app.set('layout', 'layout');
 
 // Vulnerable Session Configuration (v1)
 // - No HttpOnly, No Secure, No SameSite

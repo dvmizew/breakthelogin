@@ -154,9 +154,13 @@ nav {
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem 2rem;
-    background: var(--glass-bg);
-    backdrop-filter: blur(8px);
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--glass-border);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 .logo {
