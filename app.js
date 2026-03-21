@@ -149,11 +149,20 @@ app.post('/reset-password', (req, res) => {
 app.get('/tickets', (req, res) => {
     if (!req.session.user) return res.redirect('/login');
 
-    // VULNERABILITY: IDOR (Insecure Direct Object Reference)
-    // No proper check if the user is owner or admin in the query logic
-    db.all(`SELECT * FROM tickets`, [], (err, rows) => {
+    const query = req.query.q || '';
+    
+    // VULNERABILITY: IDOR - No check if user owns the tickets
+    let sql = `SELECT * FROM tickets`;
+    let params = [];
+    
+    if (query) {
+        sql += ` WHERE title LIKE ? OR description LIKE ?`;
+        params = [`%${query}%`, `%${query}%`];
+    }
+
+    db.all(sql, params, (err, rows) => {
         if (err) return res.render('index', { error: 'Database error fetching tickets.' });
-        res.render('tickets', { title: 'Support Tickets', tickets: rows });
+        res.render('tickets', { title: 'Support Tickets', tickets: rows, search: query });
     });
 });
 

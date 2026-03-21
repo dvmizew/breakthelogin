@@ -56,8 +56,14 @@ db.serialize(() => {
     // Insert dummy tickets
     db.run(`INSERT OR IGNORE INTO tickets (title, description, severity, status, owner_id) VALUES 
         ('Server #42 Reboot Required', 'The node in datacenter region-2 is showing signs of memory leaks.', 'HIGH', 'OPEN', 1),
+        ('Database Backup Failure', 'Automatic nightly backup for the SQL cluster failed with error 0x88. Immediate investigation required.', 'HIGH', 'OPEN', 1),
+        ('Critical Security Patch', 'Apply urgent security patch to all internal Windows workstations.', 'HIGH', 'IN_PROGRESS', 1),
+        ('VPN Connection Issues', 'Employees in the London office are reporting intermittent disconnects from the Global VPN.', 'MED', 'OPEN', 2),
+        ('Payroll Access Error', 'Manager cannot access the quarterly report module due to 503 errors.', 'MED', 'IN_PROGRESS', 3),
+        ('HR Portal Bug', 'Employees cannot update their home address in the profile settings.', 'MED', 'RESOLVED', 3),
         ('New Laptop for Mark', 'Asset tag requesting MacBook Pro with 64GB RAM.', 'LOW', 'OPEN', 2),
-        ('Payroll Access Error', 'Manager cannot access the quarterly report module due to 503 errors.', 'MED', 'IN_PROGRESS', 3)
+        ('Printer Jam in Floor 3', 'The main office printer has a persistent paper jam in tray 2.', 'LOW', 'OPEN', 3),
+        ('Forgot My Badge', 'Employee logged a ticket to get a temporary access card for today.', 'LOW', 'RESOLVED', 2)
     `);
 
     console.log("Database initialized");

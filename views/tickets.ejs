@@ -1,6 +1,10 @@
 <div class="dashboard-container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; gap: 2rem;">
         <h2>Internal Support Tickets</h2>
+        <form action="/tickets" method="GET" style="flex: 1; max-width: 400px; display: flex; gap: 0.5rem;">
+            <input type="text" name="q" value="<%= locals.search || '' %>" placeholder="Search by title..." style="padding: 0.5rem 1rem;">
+            <button type="submit" style="width: auto; margin: 0; padding: 0.5rem 1rem;">Search</button>
+        </form>
         <button style="width:auto; padding:0.5rem 1.5rem; margin:0;" onclick="alert('Creating tickets is disabled for this audit demo.')">+ Create New</button>
     </div>
 
