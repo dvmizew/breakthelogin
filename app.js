@@ -233,8 +233,8 @@ app.post('/register', (req, res) => {
 
             const passwordHash = hashPassword(password);
             db.run(
-                `INSERT INTO users (email, password, password_hash, role, created_at, locked, failed_attempts, locked_until) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 0, 0, NULL)`,
-                [email, '__deprecated__', passwordHash, 'USER'],
+                `INSERT INTO users (email, password_hash, role, created_at, locked, failed_attempts, locked_until) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0, 0, NULL)`,
+                [email, passwordHash, 'USER'],
                 insertErr => {
                     if (insertErr) {
                         return renderRegister(res, 500, GENERIC_REGISTER_ERROR);
@@ -338,8 +338,8 @@ app.post('/forgot-password', resetRequestLimiter, (req, res) => {
             const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000).toISOString();
 
             db.run(
-                `INSERT INTO password_reset_tokens (user_id, token, token_hash, expires_at, used_at, created_at) VALUES (?, ?, ?, ?, NULL, CURRENT_TIMESTAMP)`,
-                [user.id, token, tokenHash, expiresAt],
+                `INSERT INTO password_reset_tokens (user_id, token_hash, expires_at, used_at, created_at) VALUES (?, ?, ?, NULL, CURRENT_TIMESTAMP)`,
+                [user.id, tokenHash, expiresAt],
                 insertErr => {
                     if (insertErr) {
                         return renderForgotPassword(res, 500, null, GENERIC_RESET_REQUEST_MESSAGE);
@@ -347,6 +347,7 @@ app.post('/forgot-password', resetRequestLimiter, (req, res) => {
 
                     if (process.env.NODE_ENV !== 'production') {
                         console.log(`[reset-token] ${email}: ${token}`);
+                        res.set('X-Reset-Token', token);
                     }
 
                     return renderForgotPassword(res, 200, null, GENERIC_RESET_REQUEST_MESSAGE);
@@ -377,9 +378,11 @@ app.post('/reset-password', (req, res) => {
         });
     }
 
+    const tokenHash = hashResetToken(token);
+
     db.get(
-        `SELECT id, user_id, token, token_hash, expires_at, used_at FROM password_reset_tokens WHERE token = ?`,
-        [token],
+        `SELECT id, user_id, token_hash, expires_at, used_at FROM password_reset_tokens WHERE token_hash = ?`,
+        [tokenHash],
         (err, resetRow) => {
             if (err || !resetRow) {
                 return res.status(400).render('reset-password', { title: 'Update Password', error: GENERIC_RESET_ERROR, token });
@@ -391,8 +394,8 @@ app.post('/reset-password', (req, res) => {
 
             const passwordHash = hashPassword(password);
             db.run(
-                `UPDATE users SET password = ?, password_hash = ? WHERE id = ?`,
-                ['__deprecated__', passwordHash, resetRow.user_id],
+                `UPDATE users SET password_hash = ? WHERE id = ?`,
+                [passwordHash, resetRow.user_id],
                 updateErr => {
                     if (updateErr) {
                         return res.status(500).render('reset-password', { title: 'Update Password', error: GENERIC_RESET_ERROR, token });

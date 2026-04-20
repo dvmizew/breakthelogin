@@ -18,7 +18,6 @@ db.serialize(() => {
     db.run(`CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL DEFAULT '__deprecated__',
         password_hash TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'USER',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -53,7 +52,6 @@ db.serialize(() => {
     db.run(`CREATE TABLE password_reset_tokens (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
-        token TEXT NOT NULL,
         token_hash TEXT NOT NULL,
         expires_at TEXT NOT NULL,
         used_at TEXT,
@@ -67,10 +65,10 @@ db.serialize(() => {
         ['victim@authx.com', 'Victim@12345!', 'USER']
     ];
 
-    const insertUser = db.prepare(`INSERT INTO users (email, password, password_hash, role, locked, failed_attempts, locked_until) VALUES (?, ?, ?, ?, 0, 0, NULL)`);
+    const insertUser = db.prepare(`INSERT INTO users (email, password_hash, role, locked, failed_attempts, locked_until) VALUES (?, ?, ?, 0, 0, NULL)`);
 
     for (const [email, password, role] of seededUsers) {
-        insertUser.run(email, '__deprecated__', hashPassword(password), role);
+        insertUser.run(email, hashPassword(password), role);
     }
 
     insertUser.finalize();
