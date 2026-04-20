@@ -1,19 +1,33 @@
+const crypto = require('crypto');
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('database.sqlite');
 
+function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
+    const derived = crypto.scryptSync(password, salt, 64).toString('hex');
+    return `scrypt$${salt}$${derived}`;
+}
+
 db.serialize(() => {
-    // 1. Users Table (Vulnerable: storing plaintext password)
-    db.run(`CREATE TABLE IF NOT EXISTS users (
+    db.run('PRAGMA foreign_keys = ON');
+
+    db.run('DROP TABLE IF EXISTS password_reset_tokens');
+    db.run('DROP TABLE IF EXISTS audit_logs');
+    db.run('DROP TABLE IF EXISTS tickets');
+    db.run('DROP TABLE IF EXISTS users');
+
+    db.run(`CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
+        password TEXT NOT NULL DEFAULT '__deprecated__',
+        password_hash TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'USER',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        locked BOOLEAN DEFAULT 0
+        locked BOOLEAN DEFAULT 0,
+        failed_attempts INTEGER NOT NULL DEFAULT 0,
+        locked_until TEXT
     )`);
 
-    // 2. Tickets Table
-    db.run(`CREATE TABLE IF NOT EXISTS tickets (
+    db.run(`CREATE TABLE tickets (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         description TEXT,
@@ -25,8 +39,7 @@ db.serialize(() => {
         FOREIGN KEY (owner_id) REFERENCES users(id)
     )`);
 
-    // 3. Audit Logs Table
-    db.run(`CREATE TABLE IF NOT EXISTS audit_logs (
+    db.run(`CREATE TABLE audit_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
         action TEXT NOT NULL,
@@ -37,24 +50,32 @@ db.serialize(() => {
         FOREIGN KEY (user_id) REFERENCES users(id)
     )`);
 
-    // 4. Password Reset Tokens (Vulnerable: simple tokens, no expiration)
-    db.run(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    db.run(`CREATE TABLE password_reset_tokens (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER,
         token TEXT NOT NULL,
-        used BOOLEAN DEFAULT 0,
+        token_hash TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        used_at TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id)
     )`);
 
-    // Insert dummy data
-    db.run(`INSERT OR IGNORE INTO users (email, password, role) VALUES 
-        ('admin@authx.com', 'admin123', 'ADMIN'),
-        ('user@authx.com', 'password', 'USER'),
-        ('victim@authx.com', '12345678', 'USER')
-    `);
+    const seededUsers = [
+        ['admin@authx.com', 'Admin@12345!', 'ADMIN'],
+        ['user@authx.com', 'User@12345!', 'USER'],
+        ['victim@authx.com', 'Victim@12345!', 'USER']
+    ];
 
-    // Insert dummy tickets
-    db.run(`INSERT OR IGNORE INTO tickets (title, description, severity, status, owner_id) VALUES 
+    const insertUser = db.prepare(`INSERT INTO users (email, password, password_hash, role, locked, failed_attempts, locked_until) VALUES (?, ?, ?, ?, 0, 0, NULL)`);
+
+    for (const [email, password, role] of seededUsers) {
+        insertUser.run(email, '__deprecated__', hashPassword(password), role);
+    }
+
+    insertUser.finalize();
+
+    db.run(`INSERT INTO tickets (title, description, severity, status, owner_id) VALUES 
         ('Server #42 Reboot Required', 'The node in datacenter region-2 is showing signs of memory leaks.', 'HIGH', 'OPEN', 1),
         ('Database Backup Failure', 'Automatic nightly backup for the SQL cluster failed with error 0x88. Immediate investigation required.', 'HIGH', 'OPEN', 1),
         ('Critical Security Patch', 'Apply urgent security patch to all internal Windows workstations.', 'HIGH', 'IN_PROGRESS', 1),
@@ -66,7 +87,7 @@ db.serialize(() => {
         ('Forgot My Badge', 'Employee logged a ticket to get a temporary access card for today.', 'LOW', 'RESOLVED', 2)
     `);
 
-    console.log("Database initialized");
+    console.log('Database initialized');
 });
 
 db.close();
