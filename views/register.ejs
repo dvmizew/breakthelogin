@@ -1,19 +1,57 @@
 <div class="glass-card">
     <h2>Signup</h2>
     <p style="text-align:center; color: var(--text-muted); margin-bottom: 2rem;">Join the AuthX workforce. Get started in minutes.</p>
-    
+
     <% if (error) { %>
         <div class="alert alert-error"><%= error %></div>
+
+        <% if (typeof errorDetails !== 'undefined' && errorDetails && errorDetails.length > 0) { %>
+            <div class="alert alert-help">
+                <p class="help-title">Exact issue(s):</p>
+                <ul class="help-list">
+                    <% errorDetails.forEach(function(issue) { %>
+                        <li><%= issue %></li>
+                    <% }); %>
+                </ul>
+            </div>
+        <% } %>
     <% } %>
 
     <form action="/register" method="POST">
         <div class="form-group">
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="name@company.com" required>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="name@company.com"
+                value="<%= (typeof formData !== 'undefined' && formData && formData.email) ? formData.email : '' %>"
+                required
+            >
         </div>
         <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Min 10 chars, upper/lower/number/symbol" required>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Min 10 chars, upper/lower/number/symbol"
+                minlength="10"
+                pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{10,}"
+                title="Minimum 10 characters, including uppercase, lowercase, number, and symbol."
+                required
+            >
+            <div class="password-checklist" id="password-checklist" aria-live="polite">
+                <p class="help-title">Password requirements:</p>
+                <ul class="help-list checklist-list">
+                    <li id="rule-length" class="checklist-item">At least 10 characters</li>
+                    <li id="rule-lower" class="checklist-item">At least one lowercase letter (a-z)</li>
+                    <li id="rule-upper" class="checklist-item">At least one uppercase letter (A-Z)</li>
+                    <li id="rule-digit" class="checklist-item">At least one digit (0-9)</li>
+                    <li id="rule-symbol" class="checklist-item">At least one symbol (!@#$...)</li>
+                </ul>
+            </div>
+            <p class="field-hint">Use at least 10 chars with uppercase, lowercase, number, and symbol.</p>
         </div>
         <button type="submit">Create Account</button>
     </form>

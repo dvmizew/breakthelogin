@@ -90,6 +90,28 @@ function isStrongPassword(password) {
         && /[^A-Za-z0-9]/.test(password);
 }
 
+function getPasswordRuleIssues(password) {
+    const issues = [];
+
+    if (typeof password !== 'string' || password.length < PASSWORD_MIN_LENGTH) {
+        issues.push(`Password must be at least ${PASSWORD_MIN_LENGTH} characters long.`);
+    }
+    if (!/[a-z]/.test(password)) {
+        issues.push('Password must include at least one lowercase letter.');
+    }
+    if (!/[A-Z]/.test(password)) {
+        issues.push('Password must include at least one uppercase letter.');
+    }
+    if (!/[0-9]/.test(password)) {
+        issues.push('Password must include at least one digit.');
+    }
+    if (!/[^A-Za-z0-9]/.test(password)) {
+        issues.push('Password must include at least one symbol.');
+    }
+
+    return issues;
+}
+
 function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
     const derived = crypto.scryptSync(password, salt, 64).toString('hex');
     return `scrypt$${salt}$${derived}`;
@@ -130,18 +152,23 @@ function logAudit(userId, action, resource, resourceId, req) {
     );
 }
 
-function renderLogin(res, status, error, success = null) {
+function renderLogin(res, status, error, success = null, formData = {}, errorDetails = []) {
     return res.status(status).render('login', {
         title: 'Login',
         error,
-        success
+        success,
+        formData,
+        errorDetails
     });
 }
 
-function renderRegister(res, status, error) {
+function renderRegister(res, status, error, formData = {}, hintType = null, errorDetails = []) {
     return res.status(status).render('register', {
         title: 'Register Account',
-        error
+        error,
+        formData,
+        hintType,
+        errorDetails
     });
 }
 
@@ -208,15 +235,35 @@ app.get('/', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-    res.render('register', { title: 'Register Account' });
+    res.render('register', {
+        title: 'Register Account',
+        formData: {},
+        hintType: null,
+        errorDetails: []
+    });
 });
 
 app.post('/register', (req, res) => {
     const email = normalizeEmail(req.body.email);
     const password = String(req.body.password || '');
+    const formData = { email };
+    const errorDetails = [];
 
-    if (!isValidEmail(email) || !isStrongPassword(password)) {
-        return renderRegister(res, 400, 'Use a valid email and a password with at least 10 characters, upper and lower case letters, a number, and a symbol.');
+    if (!isValidEmail(email)) {
+        errorDetails.push('Email format is invalid. Expected something like name@company.com.');
+    }
+
+    errorDetails.push(...getPasswordRuleIssues(password));
+
+    if (errorDetails.length > 0) {
+        return renderRegister(
+            res,
+            400,
+            'Account could not be created. Please fix the exact issues below.',
+            formData,
+            'validation',
+            errorDetails
+        );
     }
 
     db.get(
@@ -224,11 +271,18 @@ app.post('/register', (req, res) => {
         [email],
         (err, existingUser) => {
             if (err) {
-                return renderRegister(res, 500, GENERIC_REGISTER_ERROR);
+                return renderRegister(res, 500, GENERIC_REGISTER_ERROR, formData, 'generic', []);
             }
 
             if (existingUser) {
-                return renderRegister(res, 400, GENERIC_REGISTER_ERROR);
+                return renderRegister(
+                    res,
+                    400,
+                    'Email is already registered.',
+                    formData,
+                    'duplicate',
+                    ['Try another email address or sign in with this account.']
+                );
             }
 
             const passwordHash = hashPassword(password);
@@ -237,7 +291,7 @@ app.post('/register', (req, res) => {
                 [email, passwordHash, 'USER'],
                 insertErr => {
                     if (insertErr) {
-                        return renderRegister(res, 500, GENERIC_REGISTER_ERROR);
+                        return renderRegister(res, 500, GENERIC_REGISTER_ERROR, formData, 'generic', []);
                     }
 
                     res.redirect('/login?success=Account created successfully. Please sign in.');
@@ -250,28 +304,67 @@ app.post('/register', (req, res) => {
 app.get('/login', (req, res) => {
     const error = req.query.error;
     const success = req.query.success;
-    res.render('login', { title: 'Login', error, success });
+    res.render('login', {
+        title: 'Login',
+        error,
+        success,
+        formData: {},
+        errorDetails: []
+    });
 });
 
 app.post('/login', loginLimiter, (req, res) => {
     const email = normalizeEmail(req.body.email);
     const password = String(req.body.password || '');
+    const formData = { email };
+
+    if (!isValidEmail(email)) {
+        return renderLogin(
+            res,
+            400,
+            'Email format is invalid.',
+            null,
+            formData,
+            ['Use a valid email format like name@company.com.']
+        );
+    }
+
+    if (!password) {
+        return renderLogin(
+            res,
+            400,
+            'Password is required.',
+            null,
+            formData,
+            ['Enter your password to continue.']
+        );
+    }
 
     db.get(
         `SELECT id, email, password_hash, role, failed_attempts, locked, locked_until FROM users WHERE email = ?`,
         [email],
         (err, user) => {
             if (err) {
-                return renderLogin(res, 500, GENERIC_AUTH_ERROR);
+                return renderLogin(res, 500, GENERIC_AUTH_ERROR, null, formData, []);
             }
 
             if (!user) {
                 crypto.scryptSync(password || 'dummy-password', 'authx-dummy-salt', 64);
-                return renderLogin(res, 401, GENERIC_AUTH_ERROR);
+                return renderLogin(res, 401, GENERIC_AUTH_ERROR, null, formData, []);
             }
 
             if (isAccountLocked(user)) {
-                return renderLogin(res, 401, GENERIC_AUTH_ERROR);
+                const lockUntil = new Date(user.locked_until);
+                const remainingMs = Math.max(0, lockUntil.getTime() - Date.now());
+                const remainingMinutes = Math.ceil(remainingMs / 60000);
+                return renderLogin(
+                    res,
+                    423,
+                    'Account is temporarily locked.',
+                    null,
+                    formData,
+                    [`Too many failed attempts. Try again in about ${remainingMinutes} minute(s).`]
+                );
             }
 
             if (user.locked_until && new Date(user.locked_until).getTime() <= Date.now()) {
@@ -283,14 +376,14 @@ app.post('/login', loginLimiter, (req, res) => {
             if (!passwordMatches) {
                 recordFailedLogin(user);
                 logAudit(user.id, 'LOGIN_FAILED', 'auth', user.id.toString(), req);
-                return renderLogin(res, 401, GENERIC_AUTH_ERROR);
+                return renderLogin(res, 401, GENERIC_AUTH_ERROR, null, formData, []);
             }
 
             resetLoginCounters(user.id);
 
             req.session.regenerate(sessionErr => {
                 if (sessionErr) {
-                    return renderLogin(res, 500, GENERIC_AUTH_ERROR);
+                    return renderLogin(res, 500, GENERIC_AUTH_ERROR, null, formData, []);
                 }
 
                 req.session.user = { id: user.id, email: user.email, role: user.role };

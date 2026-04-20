@@ -132,6 +132,75 @@ button:hover {
     color: var(--success);
 }
 
+.alert-help {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    color: #bfdbfe;
+    text-align: left;
+}
+
+.help-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.help-list {
+    margin-left: 1rem;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.password-checklist {
+    margin-top: 0.7rem;
+    padding: 0.8rem;
+    border-radius: 10px;
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.checklist-list {
+    list-style: none;
+    margin-left: 0;
+}
+
+.checklist-item {
+    color: #fca5a5;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.25rem;
+}
+
+.checklist-item::before {
+    content: 'x';
+    font-weight: 700;
+    color: #ef4444;
+}
+
+.checklist-item.is-met {
+    color: #86efac;
+}
+
+.checklist-item.is-met::before {
+    content: 'ok';
+    color: #22c55e;
+}
+
+.field-hint {
+    margin-top: 0.45rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.field-hint.hint-error {
+    color: #fca5a5;
+}
+
+.field-hint.hint-success {
+    color: #86efac;
+}
+
 .link-group {
     margin-top: 2rem;
     text-align: center;
