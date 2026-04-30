@@ -46,14 +46,12 @@ db.serialize(() => {
         FOREIGN KEY (user_id) REFERENCES users(id)
     )`);
 
-    // Insert dummy data
     db.run(`INSERT OR IGNORE INTO users (email, password, role) VALUES 
         ('admin@authx.com', 'admin123', 'ADMIN'),
         ('user@authx.com', 'password', 'USER'),
         ('victim@authx.com', '12345678', 'USER')
     `);
 
-    // Insert dummy tickets
     db.run(`INSERT OR IGNORE INTO tickets (title, description, severity, status, owner_id) VALUES 
         ('Server #42 Reboot Required', 'The node in datacenter region-2 is showing signs of memory leaks.', 'HIGH', 'OPEN', 1),
         ('Database Backup Failure', 'Automatic nightly backup for the SQL cluster failed with error 0x88. Immediate investigation required.', 'HIGH', 'OPEN', 1),
